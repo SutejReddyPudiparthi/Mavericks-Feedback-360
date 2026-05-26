@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  employeeId         String    @unique
+  name               String
+  email              String    @unique
+  mobile             String?
+  passwordHash       String?
+  role               String
+  status             String    @default("Active")
+  supervisorId       String?
+  supervisor         User?     @relation("SupervisorMavericks", fields: [supervisorId], references: [id])
+  mavericks          User[]    @relation("SupervisorMavericks")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  participations     SessionParticipant[]
+  maverickForms      MaverickFeedbackForm[]
+  supervisorEvals    SupervisorEvaluationForm[] @relation("SupervisorEvals")
+  maverickEvals      SupervisorEvaluationForm[] @relation("MaverickEvals")
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  otps               OtpCode[]
+  sessions           Session[]
+}
+
+model Course {
+  id           String    @id @default(cuid())
+  name         String    @unique
+  type         String
+  trainerType  String
+  domain       String
+  objectives   String
+  durationDays Int
+  status       String    @default("Active")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+}
+
+model Trainer {
+  id             String    @id @default(cuid())
+  name           String
+  organisation   String?
+  domain         String
+  engagementType String
+  status         String    @default("Active")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  sessions       Session[]
+  recommendations TrainerRecommendation[]
+}
+
+model Session {
+  id           String    @id @default(cuid())
+  courseId     String
+  course       Course    @relation(fields: [courseId], references: [id])
+  trainerId    String
+  trainer      Trainer   @relation(fields: [trainerId], references: [id])
+  adminId      String
+  admin        User      @relation(fields: [adminId], references: [id])
+  startDate    DateTime
+  endDate      DateTime
+  location     String?
+  virtualLink  String?
+  capacity     Int
+  status       String    @default("Active")
+  cancelReason String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  participants SessionParticipant[]
+  cycles       FeedbackCycle[]
+}
+
+model SessionParticipant {
+  id                    String    @id @default(cuid())
+  sessionId             String
+  session               Session   @relation(fields: [sessionId], references: [id])
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id])
+  supervisorId          String?
+  projectAssignmentDate DateTime?
+  enrolledAt            DateTime  @default(now())
+
+  @@unique([sessionId, userId])
+}
+
+model FeedbackCycle {
+  id              String    @id @default(cuid())
+  sessionId       String
+  session         Session   @relation(fields: [sessionId], references: [id])
+  cycleType       String
+  threshold       Int       @default(75)
+  status          String    @default("Open")
+  overrideReason  String?
+  closedByAdminId String?
+  openedAt        DateTime  @default(now())
+  closedAt        DateTime?
+  deadline        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  maverickForms   MaverickFeedbackForm[]
+  supervisorEvals SupervisorEvaluationForm[]
+  themeClusters   ThemeCluster[]
+}
+
+model MaverickFeedbackForm {
+  id                    String    @id @default(cuid())
+  cycleId               String
+  cycle                 FeedbackCycle @relation(fields: [cycleId], references: [id])
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id])
+  sessionId             String
+  overallRating         Int?
+  keyLearnings          String?
+  suggestedImprovements String?
+  followUpResponse      String?
+  status                String    @default("Draft")
+  submittedAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  sentimentResults      SentimentResult[]
+}
+
+model SupervisorEvaluationForm {
+  id                    String    @id @default(cuid())
+  cycleId               String
+  cycle                 FeedbackCycle @relation(fields: [cycleId], references: [id])
+  supervisorId          String
+  supervisor            User      @relation("SupervisorEvals", fields: [supervisorId], references: [id])
+  maverickId            String
+  maverick              User      @relation("MaverickEvals", fields: [maverickId], references: [id])
+  technicalScore        Int?
+  softSkillsScore       Int?
+  projectPerformScore   Int?
+  teamCollabScore       Int?
+  overallReadinessScore Int?
+  comments              String?
+  futureTrainingRecs    String?
+  status                String    @default("Draft")
+  submittedAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model SentimentResult {
+  id              String    @id @default(cuid())
+  formId          String
+  form            MaverickFeedbackForm @relation(fields: [formId], references: [id])
+  fieldName       String
+  sentimentLabel  String
+  confidenceScore Float?
+  processedAt     DateTime  @default(now())
+}
+
+model ThemeCluster {
+  id              String    @id @default(cuid())
+  cycleId         String
+  cycle           FeedbackCycle @relation(fields: [cycleId], references: [id])
+  themeLabel      String
+  frequencyCount  Int
+  sampleResponses String
+  generatedAt     DateTime  @default(now())
+}
+
+model Notification {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  channel        String
+  type           String
+  message        String
+  sentAt         DateTime  @default(now())
+  readAt         DateTime?
+  deliveryStatus String    @default("Sent")
+}
+
+model AuditLog {
+  id           String    @id @default(cuid())
+  actorId      String
+  actor        User      @relation(fields: [actorId], references: [id])
+  action       String
+  entityType   String
+  entityId     String
+  oldValue     String?
+  newValue     String?
+  timestamp    DateTime  @default(now())
+}
+
+model TrainerRecommendation {
+  id             String    @id @default(cuid())
+  domain         String
+  trainerId      String
+  trainer        Trainer   @relation(fields: [trainerId], references: [id])
+  compositeScore Float
+  sessionCount   Int
+  avgRating      Float
+  sentimentScore Float
+  generatedAt    DateTime  @default(now())
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+}
