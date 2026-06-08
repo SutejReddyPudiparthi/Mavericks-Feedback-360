@@ -1,54 +1,67 @@
 # Maverick Feedback 360
+
 ### Training Feedback & Effectiveness Portal
 
 ---
 
 ## Stack
-| Layer | Technology |
-|---|---|
-| Frontend | React 18 + Vite + Tailwind CSS |
-| Backend | Node.js + Express |
-| ORM | Prisma 5 |
-| Database | SQLite (dev) |
-| Auth | JWT + OTP fallback |
-| Charts | Recharts |
-| AI | Stub NLP service (AWS Comprehend-ready) |
+
+| Layer    | Technology                     |
+| -------- | ------------------------------ |
+| Frontend | React 19 + Vite + Tailwind CSS |
+| Backend  | Node.js + Express              |
+| ORM      | Sequelize                      |
+| Database | SQLite (`backend/data.db`)     |
+| Auth     | JWT + OTP fallback             |
+
+> Backend was migrated from Prisma to Sequelize and preserves the existing API contract for frontend integration.
+> | Charts | Recharts |
+> | AI | Stub NLP service (AWS Comprehend-ready) |
 
 ---
 
 ## Quick Start
 
 ### 1. Backend
+
 ```bash
 cd backend
 npm install
-npm run seed        # Seeds DB with demo users
-npm run dev         # Starts API on http://localhost:5000
+npm run seed        # Seeds SQLite database with demo users
+npm start           # Starts API on http://localhost:5000
 ```
 
 ### 2. Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev         # Starts UI on http://localhost:5173
 ```
 
+### 3. UI tests
+
+```bash
+cd frontend
+npm run test:e2e   # Runs Playwright end-to-end tests
+```
+
 ---
 
 ## Demo Credentials
 
-| Role | Email | Password |
-|---|---|---|
-| Admin / L&D | admin@maverick360.com | Admin@123 |
-| Supervisor | supervisor@maverick360.com | Super@123 |
-| Maverick 1 | maverick1@maverick360.com | Mav@123 |
-| Maverick 2 | maverick2@maverick360.com | Mav@123 |
+| Role       | Email                      | Password       |
+| ---------- | -------------------------- | -------------- |
+| Admin      | admin@maverick360.com      | Admin@123      |
+| Supervisor | supervisor@maverick360.com | Supervisor@123 |
+| Maverick   | maverick@maverick360.com   | Maverick@123   |
 
 ---
 
 ## Features Implemented
 
 ### Backend API (`/api`)
+
 - `POST /auth/login` — JWT login
 - `POST /auth/otp/request` + `/otp/verify` — OTP fallback
 - `GET /auth/me` — Current user
@@ -73,6 +86,7 @@ npm run dev         # Starts UI on http://localhost:5173
 - `GET /audit-logs` — Immutable audit log (Admin only)
 
 ### Frontend Pages
+
 - **Login** — Password + OTP tabs with demo credentials panel
 - **Admin Dashboard** — KPI cards, session list, alert feed
 - **Sessions** — Create/edit/cancel, participant upload, cycle monitor, override modal
@@ -101,6 +115,7 @@ npm run dev         # Starts UI on http://localhost:5173
 ---
 
 ## Production Checklist
+
 - [ ] Replace `JWT_SECRET` with a secure random value
 - [ ] Switch `DATABASE_URL` to PostgreSQL connection string
 - [ ] Wire SSO IdP (SAML 2.0 / OAuth 2.0)
